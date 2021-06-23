@@ -18,28 +18,18 @@ SeriesMatrix <- getGEO(filename = "GSE19804_series_matrix.txt")
 metadata19804 <- SeriesMatrix@phenoData@data
 df_metaframe <- model.frame(metadata19804)
 
+rma <- rma(gse) #normalisastion
 
 #annotation
 
-sampleNames(gse) = paste(rep(c("C", "N"), each = 60), rep(c(1:60, 1:60), each = 1), sep="")
-sampleNames(gse)
-
-
-# filtered_genesymbols <- genesymbols[is.na(genesymbols$SYMBOL) == FALSE,]
-
-#gene filtering
-
-assay(filtered_genesymbols)
-rowMeans()
+sampleNames(rma) = paste(rep(c("C", "N"), each = 60), rep(c(1:60, 1:60), each = 1), sep="")
+sampleNames(rma)
 
 #limma
 
-# cancer <- factor(1*(metadata19804$`tissue:ch1` == "lung cancer"))
-# normal <- factor(1*(metadata19804$`tissue:ch1` == "paired normal adjacent"))
 interest <- factor(paste(rep(c("C", "N"), each = 60), sep = ""))
 matrix <- model.matrix(~ 0 + interest)
 
-rma <- rma(gse) #normalisastion
 
 fit <- limma::lmFit(rma, matrix)
 
