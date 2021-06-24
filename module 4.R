@@ -11,14 +11,24 @@ library(AnnotationDbi)
 library(limma)
 library(pheatmap)
 library(edgeR)
-
+library(Biobase)
 
 gse <- ReadAffy(celfile.path = "GSE19804_RAW/")
-SeriesMatrix <- getGEO(filename = "GSE19804_series_matrix.txt")
-metadata19804 <- SeriesMatrix@phenoData@data
-df_metaframe <- model.frame(metadata19804)
 
 rma <- rma(gse) #normalisastion
+
+#gene filtering
+
+ID <- rownames(gse)
+
+probe <- AnnotationDbi::select(hgu133plus2.db, keys = ID,  columns = "SYMBOL")
+duplicate_probeID <- probe[!duplicated(probe$PROBEID),]
+duplicate_probeID_symbol <- duplicate_probeID[!duplicated(duplicate_probeID$SYMBOL),]
+filtered <- duplicate_probeID_symbol[!is.na(duplicate_probeID_symbol$SYMBOL),]
+
+rma_exprs <- Biobase::exprs(rma)
+
+table_merge <- merge(x = filtered, y = rma_exprs)
 
 #annotation
 
@@ -52,9 +62,8 @@ EnhancedVolcano( toptable = limma_output,
 
 #DEG 
 
-genesymbols <- AnnotationDbi::select(hgu133plus2.db, probeID, columns = "SYMBOL")
 top10 <- c(rownames(topTable(efit, n = 10)))
-top10gene <- subset(genesymbols, genesymbols$PROBEID %in% top10)
+top10gene <- subset(filtered, filtered$PROBEID %in% top10)
 top10gene[,2]
 
 #still fixing
