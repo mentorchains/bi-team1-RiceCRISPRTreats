@@ -3,7 +3,6 @@ library(EnhancedVolcano)
 library(ggplot2)
 library(pheatmap)
 library(simpleaffy)
-library(GEOquery)
 library(tidyverse)
 library(hgu133plus2.db)
 library(org.Hs.eg.db)
@@ -17,20 +16,28 @@ gse <- ReadAffy(celfile.path = "GSE19804_RAW/")
 
 rma <- rma(gse) #normalisastion
 
-#gene filtering
+#Annotation
 
 ID <- rownames(gse)
 
 probe <- AnnotationDbi::select(hgu133plus2.db, keys = ID,  columns = "SYMBOL")
 duplicate_probeID <- probe[!duplicated(probe$PROBEID),]
-duplicate_probeID_symbol <- duplicate_probeID[!duplicated(duplicate_probeID$SYMBOL),]
-filtered <- duplicate_probeID_symbol[!is.na(duplicate_probeID_symbol$SYMBOL),]
 
 rma_exprs <- Biobase::exprs(rma)
 
-table_merge <- merge(x = filtered, y = rma_exprs)
+table_merge <- merge(x = duplicate_probeID, y = rma_exprs, by.x = "PROBEID", by.y = "row.names")
 
-#annotation
+table_merge <- table_merge[!duplicated(table_merge$SYMBOL),]
+table_merge <- na.omit(table_merge)
+rownames(table_merge) <- table_merge$SYMBOL
+annotated <- table_merge[-c(1,2)]
+
+#Gene filtering
+
+mean <- rowMeans(annotated)
+remove_lower_0.02
+
+#
 
 sampleNames(rma) = paste(rep(c("C", "N"), each = 60), rep(c(1:60, 1:60), each = 1), sep="")
 sampleNames(rma)
