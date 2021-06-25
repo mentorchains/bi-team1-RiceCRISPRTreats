@@ -1,6 +1,7 @@
 library(WGCNA)
 library(EnhancedVolcano)
 library(ggplot2)
+library(GEOquery)
 library(pheatmap)
 library(simpleaffy)
 library(tidyverse)
@@ -12,9 +13,16 @@ library(pheatmap)
 library(edgeR)
 library(Biobase)
 
-gse <- ReadAffy(celfile.path = "GSE19804_RAW/")
+#metadata
 
-rma <- rma(gse) #normalisastion
+gse <- ReadAffy(celfile.path = "GSE19804_RAW/")
+gse19804 <- getGEO(filename = "GSE19804_series_matrix.txt")
+metadata <- gse19804@phenoData@data
+CN <- metadata[c("tissue:ch1")]
+
+#Normalisation
+
+rma <- rma(gse) 
 
 #Annotation
 
@@ -35,29 +43,18 @@ annotated <- table_merge[-c(1,2)]
 #Gene filtering
 
 mean <- rowMeans(annotated)
-remove_lower_0.02
-
-#
-
-sampleNames(rma) = paste(rep(c("C", "N"), each = 60), rep(c(1:60, 1:60), each = 1), sep="")
-sampleNames(rma)
+remove_lower_0.02 <- annotated[which(mean > 0.02),]
 
 #limma
 
 interest <- factor(paste(rep(c("C", "N"), each = 60), sep = ""))
-matrix <- model.matrix(~ 0 + interest)
+n <- factor(CN$`tissue:ch1`)
+matrix <- model.matrix(~ 0 + n)
 
 
-fit <- limma::lmFit(rma, matrix)
+fit <- limma::lmFit(remove_lower_0.02, matrix)
 
-make.names(c("interestlung cancer", "interestpaired normal adjacent"), unique = TRUE)
-contrast.matrix <- makeContrasts(
-  interestC-interestN, 
-  levels = matrix)
-
-fit.contrast = contrasts.fit(fit, contrast.matrix)
-
-efit <- eBayes(fit.contrast)
+efit <- eBayes(fit)
 
 genes=geneNames(gse)
 limma_output <- topTable(efit, n = 54670, genelist = genes)
