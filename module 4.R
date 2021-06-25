@@ -53,10 +53,10 @@ matrix <- model.matrix(~ CN, df)
 
 fit <- limma::lmFit(remove_lower_0.02, matrix)
 
-efit <- eBayes(fit)
+efit <- eBayes(fit = fit)
 
 genes=geneNames(gse)
-limma_output <- topTable(efit, n = 54670, genelist = genes)
+limma_output <- topTable(efit, p.value = 0.05, adjust.method = "fdr",  sort.by = "P", gene=rownames(remove_lower_0.02), number = 10000)
 
 EnhancedVolcano( toptable = limma_output, 
                  lab = rownames(limma_output), 
@@ -65,8 +65,7 @@ EnhancedVolcano( toptable = limma_output,
 
 #DEG 
 
-top10 <- c(rownames(topTable(efit, n = 10)))
-top10gene <- subset(filtered, filtered$PROBEID %in% top10)
-top10gene[,2]
+top10 <- topTable(efit, number = 10)
+rownames(top10)
 
 #still fixing
