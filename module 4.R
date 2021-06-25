@@ -45,19 +45,19 @@ annotated <- table_merge[-c(1,2)]
 mean <- rowMeans(annotated)
 remove_lower_0.02 <- annotated[which(mean > 0.02),]
 
+
 #limma
-df <- as.data.frame(CN)
-colnames(df) <- c('CN')
-matrix <- model.matrix(~ CN, df)
-
-
-fit <- limma::lmFit(remove_lower_0.02, matrix)
-
-efit <- eBayes(fit = fit)
-
+interest <- factor(paste(rep(c("C", "N"), each = 60), sep = ""))
+matrix <- model.matrix(~ 0 + interest)
+fit <- limma::lmFit(rma, matrix)
+make.names(c("interestlung cancer", "interestpaired normal adjacent"), unique = TRUE)
+contrast.matrix <- makeContrasts(
+  interestC-interestN, 
+  levels = matrix)
+fit.contrast = contrasts.fit(fit, contrast.matrix)
+efit <- eBayes(fit.contrast)
 genes=geneNames(gse)
-limma_output <- topTable(efit, p.value = 0.05, adjust.method = "fdr",  sort.by = "P", gene=rownames(remove_lower_0.02), number = 10000)
-
+limma_output <- topTable(efit, n = 54670, genelist = genes)
 EnhancedVolcano( toptable = limma_output, 
                  lab = rownames(limma_output), 
                  x = "logFC", 
