@@ -46,10 +46,9 @@ mean <- rowMeans(annotated)
 remove_lower_0.02 <- annotated[which(mean > 0.02),]
 
 #limma
-
-interest <- factor(paste(rep(c("C", "N"), each = 60), sep = ""))
-n <- factor(CN$`tissue:ch1`)
-matrix <- model.matrix(~ 0 + n)
+df <- as.data.frame(CN)
+colnames(df) <- c('CN')
+matrix <- model.matrix(~ CN, df)
 
 
 fit <- limma::lmFit(remove_lower_0.02, matrix)
