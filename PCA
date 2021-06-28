@@ -1,0 +1,30 @@
+setwd("~/Downloads/_dataforR2")
+library(simpleaffy)
+library(tidyverse)
+library(ggfortify)
+
+data <- read.delim("seriesmatfile.txt", header = TRUE)
+gse <- ReadAffy()
+
+rawGSE <- exprs(gse)
+
+#Raw Data Plot
+pca_OG <- prcomp(rawGSE, scale=F, center=F)
+pca_OG <- as.data.frame(pca_OG$rotation)
+
+pca_2 <- cbind(pca_OG, new_col = data['tissue'])
+
+ggplot(pca_2, aes(x=PC1, y=PC2, color=tissue))+ geom_point() + stat_ellipse() +
+  labs(title = "Raw Data PCA Plot")
+
+#Normalized Plot
+normalized <- rma(gse)
+normalizedexprs <- exprs(normalized)
+pca_normalized <- prcomp(normalizedexprs, scale=F, center=F)
+pca_normalized <- as.data.frame(pca_normalized$rotation)
+
+pca_normalized2 <- cbind(pca_normalized, new_col = data['tissue'])
+
+ggplot(pca_normalized2, aes(x=PC1, y=PC2, color=tissue))+ geom_point() + stat_ellipse() +
+  labs(title = "Normalized Data PCA Plot") 
+
