@@ -50,14 +50,13 @@ remove_lower_0.02 <- annotated[which(mean > 0.02),]
 interest <- factor(paste(rep(c("C", "N"), each = 60), sep = ""))
 matrix <- model.matrix(~ 0 + interest)
 fit <- limma::lmFit(rma, matrix)
-make.names(c("interestlung cancer", "interestpaired normal adjacent"), unique = TRUE)
 contrast.matrix <- makeContrasts(
   interestC-interestN, 
   levels = matrix)
 fit.contrast = contrasts.fit(fit, contrast.matrix)
 efit <- eBayes(fit.contrast)
 genes=geneNames(gse)
-limma_output <- topTable(efit, n = 54670, genelist = genes)
+limma_output <- topTable(efit, n = 100000)
 EnhancedVolcano( toptable = limma_output, 
                  lab = rownames(limma_output), 
                  x = "logFC", 
@@ -65,7 +64,7 @@ EnhancedVolcano( toptable = limma_output,
 
 #DEG 
 
-top10 <- topTable(efit, number = 10)
-rownames(top10)
-
-#still fixing
+top10 <- rownames(topTable(efit, n = 10))
+top10_df <- as.data.frame(top10)
+top10_merge <- merge(x = top10_df, y = table_merge, by.x = "top10", by.y = "PROBEID")
+DEG <- top10_merge$SYMBOL
