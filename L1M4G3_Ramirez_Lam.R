@@ -50,15 +50,16 @@ mean <- rowMeans(annotated)
 remove_lower_0.02 <- annotated[which(mean > 0.02),]
 
 
+
+  
 #limma
-interest <- factor(paste(rep(c("C", "N"), each = 60), sep = ""))
-matrix <- model.matrix(~ 0 + interest)
+#creating model
+CN <- data.frame(Tissue = metadata$`tissue:ch1`)
+rownames(CN) <- rownames(metadata)
+CN$Tissue <- ifelse(CN$Tissue == 'lung cancer', 1, 0)
+matrix <- model.matrix(~ Tissue, CN)
 fit <- limma::lmFit(rma, matrix)
-contrast.matrix <- makeContrasts(
-  interestC-interestN, 
-  levels = matrix)
-fit.contrast = contrasts.fit(fit, contrast.matrix)
-efit <- eBayes(fit.contrast)
+efit <- eBayes(fit)
 genes=geneNames(gse)
 limma_output <- topTable(efit, p.value=0.05, adjust.method="fdr", sort.by=, n = 50000)
 EnhancedVolcano( toptable = limma_output, 
