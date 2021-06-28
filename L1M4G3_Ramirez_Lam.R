@@ -60,7 +60,7 @@ contrast.matrix <- makeContrasts(
 fit.contrast = contrasts.fit(fit, contrast.matrix)
 efit <- eBayes(fit.contrast)
 genes=geneNames(gse)
-limma_output <- topTable(efit, n = 100000)
+limma_output <- topTable(efit, p.value=0.05, adjust.method="fdr", sort.by=, n = 50000)
 EnhancedVolcano( toptable = limma_output, 
                  lab = rownames(limma_output), 
                  x = "logFC", 
