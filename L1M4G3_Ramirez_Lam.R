@@ -1,3 +1,7 @@
+#L1M4G3
+#Writer: Roman Ramirez, Hou Wang Lam
+#Stemaway Session 1 BI pathway 2021
+
 library(WGCNA)
 library(EnhancedVolcano)
 library(ggplot2)
