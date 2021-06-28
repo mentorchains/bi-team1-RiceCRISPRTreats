@@ -49,9 +49,6 @@ annotated <- table_merge[-c(1,2)]
 mean <- rowMeans(annotated)
 remove_lower_0.02 <- annotated[which(mean > 0.02),]
 
-
-
-  
 #limma
 #creating model
 CN <- data.frame(Tissue = metadata$`tissue:ch1`)
@@ -71,5 +68,5 @@ EnhancedVolcano( toptable = limma_output,
 
 top10 <- rownames(topTable(efit, n = 10))
 top10_df <- as.data.frame(top10)
-top10_merge <- merge(x = top10_df, y = table_merge, by.x = "top10", by.y = "PROBEID")
+top10_merge <- merge(x = top10_df, y = probe, by.x = "top10", by.y = "PROBEID")
 DEG <- top10_merge$SYMBOL
