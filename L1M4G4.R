@@ -1,5 +1,5 @@
 # Module 4 Deliverables
-# Level 1 Group 4 Mod 4
+# Level 1 Module 4 Group 4 (L1M4G4)
 # Aditi Verma 
 # Shreya Vora
 # Kelly Zhang
