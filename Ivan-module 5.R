@@ -18,56 +18,51 @@ library(magrittr)
 library(tidyr)
 library(ggnewscale)
 
+#from module 4
 #metadata
-
 gse <- ReadAffy(celfile.path = "GSE19804_RAW/")
 gse19804 <- getGEO(filename = "GSE19804_series_matrix.txt")
 metadata <- gse19804@phenoData@data
 CN <- metadata[c("tissue:ch1")]
-
 #Normalisation
-
 rma <- rma(gse) 
-
-#Annotation
-
+#Annotation and remove duplicates + NA
 ID <- rownames(gse)
-
 probe <- AnnotationDbi::select(hgu133plus2.db, keys = ID,  columns = "SYMBOL")
 duplicate_probeID <- probe[!duplicated(probe$PROBEID),]
-
 rma_exprs <- Biobase::exprs(rma)
-
 table_merge <- merge(x = duplicate_probeID, y = rma_exprs, by.x = "PROBEID", by.y = "row.names")
-
 table_merge <- table_merge[!duplicated(table_merge$SYMBOL),]
 table_merge <- na.omit(table_merge)
 rownames(table_merge) <- table_merge$SYMBOL
 annotated <- table_merge[-c(1,2)]
+#limma
+CN <- data.frame(Tissue = metadata$`tissue:ch1`)
+rownames(CN) <- rownames(metadata)
+CN$Tissue <- ifelse(CN$Tissue == 'lung cancer', 1, 0)
+matrix <- model.matrix(~ Tissue, CN)
+fit <- limma::lmFit(annotated, matrix)
+efit <- eBayes(fit)
+genes=geneNames(gse)
+limma_output <- topTable(efit, p.value=0.05, adjust.method="fdr", sort.by=, n = 50000)
 
-
+#MODULE 5
 #DEG 
-top <- topTable(efit, n = 50000)
+logFC <- limma_output %>% dplyr::select('logFC')
+SYMBOLS_FC <-rownames(logFC)
+logFC_3 <- mutate(logFC, id = SYMBOLS_FC)
+logFC_id_probe <- merge(x = logFC_3, y = probe, by.x = "id", by.y = "SYMBOL")
 
-logFC <- top %>% dplyr::select('logFC')
-rownames_FC <-rownames(logFC)
-logFC_3 <- mutate(logFC, id = rownames_FC)
-logFC_id_probe <- merge(x = logFC_3, y = probe, by.x = "id", by.y = "PROBEID")
-logFC_symbol <- as.vector(logFC_id_probe$SYMBOL)
-IDnames <- rownames(top)
-
-#threshold + filtering
-filtered_FC <- filter(logFC, logFC < -2)
+#threshold + filtering (sorted, named, numeric vector)
+filtered_FC <- filter(logFC_id_probe, logFC < -2)
 arrange_FC <- filtered_FC %>% arrange(logFC)
 FC_vec <- as.vector(arrange_FC$logFC)
-names(FC_vec) <- rownames(arrange_FC)
+names(FC_vec) <- arrange_FC$id
 
 #selecting symbol and entrezid
 Entrezid_symbol <- AnnotationDbi::select(hgu133plus2.db, keys = ID, 
                                          columns = c("ENTREZID", "SYMBOL"))
 df_entrezid <- Entrezid_symbol %>% dplyr::select("SYMBOL", "ENTREZID")
-filter_FC <- filter(logFC_3, logFC < -2)
-filtered_with_sym <-  merge(x = filter_FC, y = probe, by.x = "id", by.y = "PROBEID")
-for_ego <- merge(x = filtered_with_sym, y = df_entrezid, by.x = "SYMBOL", by.y = "SYMBOL")
+
 #gene ontology
-enrichGO(df_entrezid, keyType = "SYMBOL" , OrgDb = org.Hs.eg.db, ont = "CC", "MF", "BP" , readable = T )
+GO <- enrichGO(df_entrezid$ENTREZID, OrgDb = org.Hs.eg.db, ont = "CC" , readable = T )
