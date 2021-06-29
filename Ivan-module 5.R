@@ -65,4 +65,11 @@ Entrezid_symbol <- AnnotationDbi::select(hgu133plus2.db, keys = ID,
 df_entrezid <- Entrezid_symbol %>% dplyr::select("SYMBOL", "ENTREZID")
 
 #gene ontology
-GO <- enrichGO(df_entrezid$ENTREZID, OrgDb = org.Hs.eg.db, ont = "CC" , readable = T )
+CC <- enrichGO(df_entrezid$ENTREZID, OrgDb = org.Hs.eg.db, ont = "CC" , readable = T )
+barplot_GO_CC <- barplot(CC)
+
+MF <- enrichGO(df_entrezid$ENTREZID, OrgDb = org.Hs.eg.db, ont = "MF" , readable = T )
+barplot_GO_MF <- barplot(MF)
+
+BP <- enrichGO(df_entrezid$ENTREZID, OrgDb = org.Hs.eg.db, ont = "BP" , readable = T )
+barplot_GO_BP <- barplot(BP)
