@@ -17,6 +17,7 @@ library(enrichplot)
 library(magrittr)
 library(tidyr)
 library(ggnewscale)
+library(msigdbr)
 
 #from module 4
 #metadata
@@ -64,7 +65,7 @@ Entrezid_symbol <- AnnotationDbi::select(hgu133plus2.db, keys = ID,
                                          columns = c("ENTREZID", "SYMBOL"))
 df_entrezid <- Entrezid_symbol %>% dplyr::select("SYMBOL", "ENTREZID")
 
-#gene ontology
+#gene ontology + boxplots
 CC <- enrichGO(df_entrezid$ENTREZID, OrgDb = org.Hs.eg.db, ont = "CC" , readable = T )
 barplot_GO_CC <- barplot(CC)
 
@@ -73,3 +74,28 @@ barplot_GO_MF <- barplot(MF)
 
 BP <- enrichGO(df_entrezid$ENTREZID, OrgDb = org.Hs.eg.db, ont = "BP" , readable = T )
 barplot_GO_BP <- barplot(BP)
+
+#KEGG
+KEGG <- enrichKEGG(df_entrezid$ENTREZID)
+dotplot_KEGG <- dotplot(KEGG)
+
+#Gene-concept network
+convert <- setReadable(KEGG, OrgDb=org.Hs.eg.db, keyType = "ENTREZID")
+centplot_GCN <- cnetplot(convert, foldChange = FC_vec, categorySize = "pvalue")
+
+#Global/universal gene set enrichment analysis (GSEA)
+gene_set <- msigdbr(species = "Homo sapiens", category = "H")
+h <- gene_set %>% select (gs_name, entrez_gene)
+
+removed_duplicate <- Entrezid_symbol[!duplicated(Entrezid_symbol$SYMBOL),]
+removed_duplicate <- na.omit(removed_duplicate)
+rowname_symbol <- removed_duplicate$SYMBOL
+rownames(removed_duplicate) <- rowname_symbol
+GSEA_merge <- merge(x = removed_duplicate, y = limma_output, by = "row.names")
+GSEA_logFC <- as.vector(GSEA_merge$logFC)
+GSEA_entrezid <- as.vector(GSEA_merge$ENTREZID)
+names(GSEA_logFC) <- GSEA_entrezid
+sorted <- sort(GSEA_logFC, decreasing = TRUE)
+
+GSEA_analysis <- GSEA(sorted, TERM2GENE = h)
+GSEA_plot <- gseaplot(GSEA_analysis, geneSetID = 2:10)
