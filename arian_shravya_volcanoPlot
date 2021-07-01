@@ -1,0 +1,80 @@
+#Download Packages
+# BiocManager::install("hgu133plus2.db")
+# BiocManager::install("WGCNA")
+# BiocManager::install("limma")
+# BiocManager::install('EnhancedVolcano')
+# BiocManager::install("DESeq2")
+
+setwd("~/Downloads/_dataforR2")
+library(simpleaffy)
+library(ggplot2)
+library(pheatmap)
+library(EnhancedVolcano)
+library(limma)
+library(WGCNA)
+library(hgu133plus2cdf)
+library("hgu133plus2.db")
+library('DESeq2')
+
+
+#Read Data
+data <- read.delim("seriesmatfile.txt", header = TRUE)
+gse <- ReadAffy()
+
+rawGSE <- exprs(gse)
+
+#Remove Outliers
+#Source: 
+#outliers <- boxplot(gse$breaks, plot=FALSE)$out
+
+#new_data <- gse
+#new_data <- new_data[,-which(new_data$breaks %in% outliers)]
+
+#Normalize
+normalized_og <- rma(gse)
+normalized <- rma(gse)
+normalizedexprs <- exprs(normalized)
+
+
+#Annotate 
+ID <- rownames(normalized)
+annotations <- select(hgu133plus2.db, keys = ID, columns = "SYMBOL")
+
+#Gene Filtering
+annotations <- annotations[!duplicated(annotations $PROBEID), ]
+rownames(annotations) <- annotations$PROBEID 
+
+merge <- merge(annotations, normalizedexprs, by = "row.names")
+merge <- merge[!duplicated(merge $SYMBOL), ]
+merge <- na.omit(merge)
+rownames(merge) <- merge$SYMBOL
+normalized <- merge[-c(1, 2, 3)]
+
+
+
+#Gene Filtering
+means <- rowMeans(normalized)
+filter <- quantile(means, p=0.02)
+filter <- normalized[which(means<filter),]
+
+gene_symbol <- annotations[2]
+rownames(gene_symbol) <- NULL
+
+#Limma
+group <- data.frame(Tissue=data$tissue)
+colnames(filter) <- rownames(group)
+  
+
+
+#Volcano Plot with Enhanced 
+matrix <- model.matrix(~tissue, data)
+limmaModel <- lmFit(normalized, matrix)
+eBayesModel <- eBayes(fit=limmaModel)
+plotData <- topTable(eBayesModel, number = 100000) 
+plot <- EnhancedVolcano(plotData, 
+                 lab = rownames(plotData), 
+                 x = "logFC", 
+                 y = "P.Value")
+
+
+
