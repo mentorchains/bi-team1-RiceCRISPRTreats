@@ -55,7 +55,7 @@ logFC_3 <- mutate(logFC, id = SYMBOLS_FC)
 logFC_id_probe <- merge(x = logFC_3, y = probe, by.x = "id", by.y = "SYMBOL")
 
 #threshold + filtering (sorted, named, numeric vector)
-filtered_FC <- filter(logFC_id_probe, logFC < -2)
+filtered_FC <- filter(logFC_id_probe, logFC > 1.5)
 arrange_FC <- filtered_FC %>% arrange(logFC)
 FC_vec <- as.vector(arrange_FC$logFC)
 names(FC_vec) <- arrange_FC$id
@@ -81,7 +81,7 @@ dotplot_KEGG <- dotplot(KEGG)
 
 #Gene-concept network
 convert <- setReadable(KEGG, OrgDb=org.Hs.eg.db, keyType = "ENTREZID")
-centplot_GCN <- cnetplot(convert, foldChange = FC_vec, categorySize = "pvalue")
+centplot_GCN <- cnetplot(convert, foldChange = FC_vec, categorySize = "pvalue", max.overlaps = Inf)
 
 #Global/universal gene set enrichment analysis (GSEA)
 gene_set <- msigdbr(species = "Homo sapiens", category = "H")
@@ -98,4 +98,4 @@ names(GSEA_logFC) <- GSEA_entrezid
 sorted <- sort(GSEA_logFC, decreasing = TRUE)
 
 GSEA_analysis <- GSEA(sorted, TERM2GENE = h)
-GSEA_plot <- gseaplot(GSEA_analysis, geneSetID = 2:10)
+GSEA_plot <- gseaplot(GSEA_analysis, geneSetID = 2)
