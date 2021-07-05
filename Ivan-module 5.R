@@ -51,15 +51,13 @@ limma_output <- topTable(efit, p.value=0.05, adjust.method="fdr", sort.by=, n = 
 #MODULE 5
 #DEG 
 logFC <- limma_output %>% dplyr::select('logFC')
-SYMBOLS_FC <-rownames(logFC)
-logFC_3 <- mutate(logFC, id = SYMBOLS_FC)
-logFC_id_probe <- merge(x = logFC_3, y = probe, by.x = "id", by.y = "SYMBOL")
+logFC_vec <- as.vector(logFC$logFC)
+element_names <- rownames(limma_output)
+names(logFC_vec) <- element_names
 
 #threshold + filtering (sorted, named, numeric vector)
-filtered_FC <- filter(logFC_id_probe, logFC > 1.5)
-arrange_FC <- filtered_FC %>% arrange(logFC)
-FC_vec <- as.vector(arrange_FC$logFC)
-names(FC_vec) <- arrange_FC$id
+filtered_FC <- logFC_vec[logFC_vec > 2]
+arrange_FC <- sort(filtered_FC, decreasing = TRUE)
 
 #selecting symbol and entrezid
 Entrezid_symbol <- AnnotationDbi::select(hgu133plus2.db, keys = ID, 
@@ -82,7 +80,7 @@ dotplot_KEGG <- dotplot(KEGG)
 
 #Gene-concept network
 convert <- setReadable(KEGG, OrgDb=org.Hs.eg.db, keyType = "ENTREZID")
-centplot_GCN <- cnetplot(convert, foldChange = FC_vec, categorySize = "pvalue", max.overlaps = Inf)
+centplot_GCN <- cnetplot(convert, foldChange = arrange_FC, categorySize = "pvalue")
 
 #Global/universal gene set enrichment analysis (GSEA)
 gene_set <- msigdbr(species = "Homo sapiens", category = "H")
