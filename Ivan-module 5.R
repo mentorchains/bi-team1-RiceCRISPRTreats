@@ -21,10 +21,10 @@ library(msigdbr)
 
 #from module 4
 #metadata
-gse <- ReadAffy(celfile.path = "GSE19804_RAW/")
-gse19804 <- getGEO(filename = "GSE19804_series_matrix.txt")
-metadata <- gse19804@phenoData@data
-CN <- metadata[c("tissue:ch1")]
+gse <- ReadAffy(celfile.path = "GSE19804_RAW_100/")
+metadata <- read_excel("GSE19804_100.xlsx")
+metadata <- na.omit(metadata)
+rownames(metadata) <- metadata$name
 #Normalisation
 rma <- rma(gse) 
 #Annotation and remove duplicates + NA
@@ -37,12 +37,13 @@ table_merge <- table_merge[!duplicated(table_merge$SYMBOL),]
 table_merge <- na.omit(table_merge)
 rownames(table_merge) <- table_merge$SYMBOL
 annotated <- table_merge[-c(1,2)]
+#filter gene
+row_mean <- rowMeans(annotated) # calculate mean of each row in matrix
+geneFilt <- quantile(row_mean, p=0.02)
+geneFilt <- annotated[which(row_mean>geneFilt),]
 #limma
-CN <- data.frame(Tissue = metadata$`tissue:ch1`)
-rownames(CN) <- rownames(metadata)
-CN$Tissue <- ifelse(CN$Tissue == 'lung cancer', 1, 0)
-matrix <- model.matrix(~ Tissue, CN)
-fit <- limma::lmFit(annotated, matrix)
+matrix <- model.matrix(~ col2, metadata)
+fit <- limma::lmFit(geneFilt, matrix)
 efit <- eBayes(fit)
 genes=geneNames(gse)
 limma_output <- topTable(efit, p.value=0.05, adjust.method="fdr", sort.by=, n = 50000)
