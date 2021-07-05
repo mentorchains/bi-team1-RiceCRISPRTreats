@@ -61,21 +61,25 @@ arrange_FC <- sort(filtered_FC, decreasing = TRUE)
 
 #selecting symbol and entrezid
 Entrezid_symbol <- AnnotationDbi::select(hgu133plus2.db, keys = ID, 
-                                         columns = c("ENTREZID", "SYMBOL"))
+                                         columns = c("SYMBOL", "ENTREZID"))
 df_entrezid <- Entrezid_symbol %>% dplyr::select("SYMBOL", "ENTREZID")
+names <- names(arrange_FC)
+selected <- df_entrezid[df_entrezid$SYMBOL %in% names, ]
+selected <- unique(selected)
+rownames(selected) <- 1:nrow(selected)
 
 #gene ontology + boxplots
-CC <- enrichGO(df_entrezid$ENTREZID, OrgDb = org.Hs.eg.db, ont = "CC" , readable = T )
+CC <- enrichGO(selected$ENTREZID, OrgDb = org.Hs.eg.db, ont = "CC" , readable = T )
 barplot_GO_CC <- barplot(CC)
 
-MF <- enrichGO(df_entrezid$ENTREZID, OrgDb = org.Hs.eg.db, ont = "MF" , readable = T )
+MF <- enrichGO(selected$ENTREZID, OrgDb = org.Hs.eg.db, ont = "MF" , readable = T )
 barplot_GO_MF <- barplot(MF)
 
-BP <- enrichGO(df_entrezid$ENTREZID, OrgDb = org.Hs.eg.db, ont = "BP" , readable = T )
+BP <- enrichGO(selected$ENTREZID, OrgDb = org.Hs.eg.db, ont = "BP" , readable = T )
 barplot_GO_BP <- barplot(BP)
 
 #KEGG
-KEGG <- enrichKEGG(df_entrezid$ENTREZID)
+KEGG <- enrichKEGG(selected$ENTREZID, pvalueCutoff = 0.1)
 dotplot_KEGG <- dotplot(KEGG)
 
 #Gene-concept network
