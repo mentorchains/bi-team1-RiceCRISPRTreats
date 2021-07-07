@@ -85,7 +85,7 @@ dotplot_KEGG <- dotplot(KEGG)
 
 #Gene-concept network
 convert <- setReadable(KEGG, OrgDb=org.Hs.eg.db, keyType = "ENTREZID")
-centplot_GCN <- cnetplot(convert, foldChange = arrange_FC, categorySize = "pvalue")
+cnetplot_GCN <- cnetplot(convert, foldChange = arrange_FC, categorySize = "pvalue")
 
 #Global/universal gene set enrichment analysis (GSEA)
 gene_set <- msigdbr(species = "Homo sapiens", category = "H")
