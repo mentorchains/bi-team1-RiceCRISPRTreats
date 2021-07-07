@@ -18,6 +18,7 @@ library(magrittr)
 library(tidyr)
 library(ggnewscale)
 library(msigdbr)
+library(readxl)
 
 #from module 4
 #metadata
@@ -79,7 +80,7 @@ BP <- enrichGO(selected$ENTREZID, OrgDb = org.Hs.eg.db, ont = "BP" , readable = 
 barplot_GO_BP <- barplot(BP)
 
 #KEGG
-KEGG <- enrichKEGG(selected$ENTREZID, pvalueCutoff = 0.07)
+KEGG <- enrichKEGG(selected$ENTREZID, pvalueCutoff = 0.2)
 dotplot_KEGG <- dotplot(KEGG)
 
 #Gene-concept network
@@ -102,3 +103,4 @@ sorted <- sort(GSEA_logFC, decreasing = TRUE)
 
 GSEA_analysis <- GSEA(sorted, TERM2GENE = h)
 GSEA_plot <- gseaplot(GSEA_analysis, geneSetID = 2)
+
