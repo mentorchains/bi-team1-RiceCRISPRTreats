@@ -114,3 +114,46 @@ enrichResultObject <- setReadable(keggOutput, OrgDb = org.Hs.eg.db, keyType = "E
 cnetplot(enrichResultObject, foldChange = sorted$logFC, categorySize="pvalue")
 
 ### 6: GLOBAL/UNIVERSAL GENE SET ENRICHMENT ANALYSIS (GSEA) ###
+
+# using limma_output to get an unfiltered data set
+unfilteredDEGs <- data.frame(genes=rownames(limma_output), logFC=limma_output$logFC)
+GSEAlogFC <- limma_output$logFC
+names(GSEAlogFC) <- rownames(limma_output)
+# read gmt downloaded from http://www.gsea-msigdb.org/gsea/downloads.jsp#msigdb
+hallmarkGeneSets <- read.gmt("data/h.all.v7.4.symbols.gmt")
+# obtain gene set
+geneSet <- msigdbr(species = "Homo sapiens", category = "H")
+# select desired information
+h <- geneSet %>% dplyr::select(gs_name, entrez_gene)
+
+
+# Generating Global DEG vector
+
+# Convert Gene Symbols to EntrezID
+converter <- AnnotationDbi::select(org.Hs.eg.db, keys=unfilteredDEGs$genes, columns="ENTREZID", keytype="SYMBOL")
+converterNoDup <- converter[!duplicated(converter$SYMBOL),]
+row.names(converterNoDup) <- converterNoDup$SYMBOL
+mergedDEGs <- merge(converterNoDup, GSEAlogFC, by = "row.names")
+
+### WIP?
+globalDEGVector <- data.frame(symbol=unfilteredDEGs$genes, entrezid=converterNoDup$"ENTREZID", logFC=unfilteredDEGs$logFC)
+globalDEGVectorSorted <- globalDEGVector[order(globalDEGVector$logFC, decreasing=TRUE),]
+logFCVector <- data.frame(globalDEGVectorSorted$logFC)
+rownames(logFCVector) <- globalDEGVectorSorted$entrezid
+
+# Making a list of values: ENTREZID and logFC
+geneVector <- mergedDEGs$y
+names(geneVector) <- mergedDEGs$ENTREZID
+geneVectorSorted <- sort(geneVector, decreasing=TRUE)
+
+# Perform GSEA Analysis
+gseaResultObject <- GSEA(geneVectorSorted,TERM2GENE = h)
+gseaplot2(gseaResultObject,
+          geneSetID = c("HALLMARK_E2F_TARGETS",
+                        "HALLMARK_G2M_CHECKPOINT",
+                        "HALLMARK_MTORC1_SIGNALING",
+                        "HALLMARK_MYC_TARGETS_V1",
+                        "HALLMARK_MYC_TARGETS_V2"),
+         
+          #,color = c("red", "yellow", "green", "blue", "purple")
+    )
