@@ -79,7 +79,7 @@ BP <- enrichGO(selected$ENTREZID, OrgDb = org.Hs.eg.db, ont = "BP" , readable = 
 barplot_GO_BP <- barplot(BP)
 
 #KEGG
-KEGG <- enrichKEGG(selected$ENTREZID, pvalueCutoff = 0.1)
+KEGG <- enrichKEGG(selected$ENTREZID, pvalueCutoff = 0.07)
 dotplot_KEGG <- dotplot(KEGG)
 
 #Gene-concept network
