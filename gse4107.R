@@ -28,8 +28,8 @@ library(readxl)
 
 #metadata
 
-gse <- ReadAffy(celfile.path = "GSE4107_RAW")
-gse19804 <- getGEO(filename = "GSE4107_series_matrix.txt")
+gse <- ReadAffy(celfile.path = "gse4107/GSE4107_RAW")
+gse19804 <- getGEO(filename = "gse4107/GSE4107_series_matrix.txt")
 metadata <- gse19804@phenoData@data
 CN <- metadata[c("title")]
 
@@ -105,7 +105,7 @@ element_names <- rownames(limma_output)
 names(logFC_vec) <- element_names
 
 #threshold + filtering (sorted, named, numeric vector)
-filtered_FC <- logFC_vec[logFC_vec > 2]
+filtered_FC <- logFC_vec[logFC_vec > 1.5]
 arrange_FC <- sort(filtered_FC, decreasing = TRUE)
 
 #selecting symbol and entrezid
