@@ -33,16 +33,6 @@ gse19804 <- getGEO(filename = "gse4107/GSE4107_series_matrix.txt")
 metadata <- gse19804@phenoData@data
 CN <- metadata[c("title")]
 
-#Normalisation
-
-normalise <- fitPLM(gse, normalize = T, background = T)
-boxplot <- boxplot(normalise)
-
-# df <- log2(exprs(norm))
-norm <- rma(gse)
-df <- exprs(norm)
-boxplot(df, main="Relative Signal BoxPlot map", ylab="Relative log expression signal-RMA", las=2)
-
 rma <- rma(gse) 
 
 #Annotation
