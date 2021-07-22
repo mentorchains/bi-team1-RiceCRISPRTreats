@@ -1,6 +1,7 @@
 library(WGCNA)
 library(EnhancedVolcano)
 library(ggplot2)
+library(affyQCReport)
 library(GEOquery)
 library(pheatmap)
 library(simpleaffy)
@@ -26,14 +27,50 @@ library(ggnewscale)
 library(msigdbr)
 library(readxl)
 
+#PCA
+library(simpleaffy)
+library(tidyverse)
+library(ggfortify)
+
 #metadata
 
 gse <- ReadAffy(celfile.path = "gse4107/GSE4107_RAW")
 gse19804 <- getGEO(filename = "gse4107/GSE4107_series_matrix.txt")
 metadata <- gse19804@phenoData@data
 CN <- metadata[c("title")]
+CN_1 <- metadata[c("title")]
 
 rma <- rma(gse) 
+
+#Raw Data Plot
+rawGSE <- exprs(gse)
+pca_OG <- prcomp(rawGSE, scale=F, center=F)
+pca_OG <- as.data.frame(pca_OG$rotation)
+
+pca_2 <- cbind(pca_OG, new_col = CN_1['title'])
+
+PCA_raw <- ggplot(pca_2, aes(x=PC1, y=PC2, color=title))+ geom_point() + stat_ellipse() +
+  labs(title = "Raw Data PCA Plot")
+
+#Normalized Plot
+normalized <- rma(gse)
+normalizedexprs <- exprs(normalized)
+pca_normalized <- prcomp(normalizedexprs, scale=F, center=F)
+pca_normalized <- as.data.frame(pca_normalized$rotation)
+
+pca_normalized2 <- cbind(pca_normalized, new_col = data['tissue'])
+
+PCA_normalised <- ggplot(pca_normalized2, aes(x=PC1, y=PC2, color=tissue))+ geom_point() + stat_ellipse() +
+  labs(title = "Normalized Data PCA Plot") 
+
+
+#rma normalisation boxplot 
+norm <- rma(gse)
+df <- exprs(norm)
+rma_boxplot <- boxplot(df, main="Relative Signal BoxPlot map", ylab="Relative log expression signal-RMA", las=2)
+
+
+
 
 #Annotation
 
@@ -74,13 +111,14 @@ EnhancedVolcano( toptable = limma_output,
                  y = "P.Value")
 
 #heatmap
+group <- data.frame(Tissue = metadata$title)
 top50 <- topTable(efit, number=50) 
 filt_50 <- data.frame(geneFilt[rownames(geneFilt) %in% rownames(top50),])
 heatmap_4107 <- pheatmap(filt_50, main="Top 50 DEG", 
          labels_row = rownames(filt_50),  
          labels_col = colnames(filt_50),
-         annotation_row=CN, 
-         annotation_col=CN, 
+         annotation_row=group, 
+         annotation_col=group, 
          annotation_colors=list(Tissue=c(Cancer="red", Normal="blue")))
 
 #DEG 
