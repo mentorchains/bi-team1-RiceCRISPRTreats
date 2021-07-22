@@ -3,7 +3,6 @@ library(EnhancedVolcano)
 library(ggplot2)
 library(affyQCReport)
 library(GEOquery)
-library(pheatmap)
 library(simpleaffy)
 library(tidyverse)
 library(hgu133plus2.db)
@@ -43,13 +42,15 @@ CN_1 <- metadata[c("title")]
 rma <- rma(gse) 
 
 #Raw Data Plot
+colour <- c(rep('cancer',12), rep('normal', 10))
+
 rawGSE <- exprs(gse)
 pca_OG <- prcomp(rawGSE, scale=F, center=F)
 pca_OG <- as.data.frame(pca_OG$rotation)
 
-pca_2 <- cbind(pca_OG, new_col = CN_1['title'])
+pca_2 <- cbind(pca_OG, new_col = colour)
 
-PCA_raw <- ggplot(pca_2, aes(x=PC1, y=PC2, color=title))+ geom_point() + stat_ellipse() +
+PCA_raw <- ggplot(pca_2, aes(x=PC1, y=PC2, color=colour))+ geom_point() + stat_ellipse() +
   labs(title = "Raw Data PCA Plot")
 
 #Normalized Plot
@@ -58,9 +59,9 @@ normalizedexprs <- exprs(normalized)
 pca_normalized <- prcomp(normalizedexprs, scale=F, center=F)
 pca_normalized <- as.data.frame(pca_normalized$rotation)
 
-pca_normalized2 <- cbind(pca_normalized, new_col = data['tissue'])
+pca_normalized2 <- cbind(pca_normalized, new_col = colour)
 
-PCA_normalised <- ggplot(pca_normalized2, aes(x=PC1, y=PC2, color=tissue))+ geom_point() + stat_ellipse() +
+PCA_normalised <- ggplot(pca_normalized2, aes(x=PC1, y=PC2, color=colour))+ geom_point() + stat_ellipse() +
   labs(title = "Normalized Data PCA Plot") 
 
 
@@ -135,6 +136,7 @@ names(logFC_vec) <- element_names
 #threshold + filtering (sorted, named, numeric vector)
 filtered_FC <- logFC_vec[logFC_vec > 1.5]
 arrange_FC <- sort(filtered_FC, decreasing = TRUE)
+topDEG <- data.frame(arrange_FC)
 
 #selecting symbol and entrezid
 Entrezid_symbol <- AnnotationDbi::select(hgu133plus2.db, keys = ID, 
